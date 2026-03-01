@@ -34,9 +34,11 @@ if [ -d "$APP_DIR/.git" ]; then
   echo "  (repo exists – pulling latest)"
   sudo -u "$APP_USER" git -C "$APP_DIR" pull --ff-only
 else
-  sudo mkdir -p "$APP_DIR"
-  sudo chown "$APP_USER:$APP_USER" "$APP_DIR"
-  sudo -u "$APP_USER" git clone "$REPO_URL" "$APP_DIR"
+  # Remove any non-git remnants (e.g. from a prior rsync deploy), then clone fresh
+  sudo rm -rf "$APP_DIR"
+  sudo mkdir -p "$(dirname "$APP_DIR")"
+  sudo git clone "$REPO_URL" "$APP_DIR"
+  sudo chown -R "$APP_USER:$APP_USER" "$APP_DIR"
 fi
 
 # ── 4. Install npm dependencies ────────────────────────────────
