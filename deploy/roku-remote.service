@@ -1,0 +1,27 @@
+[Unit]
+Description=Roku Web Remote Control
+Documentation=https://github.com/roku-web-remote
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=roku-remote
+Group=roku-remote
+WorkingDirectory=/opt/roku-remote
+ExecStart=/usr/bin/node server.js
+Restart=on-failure
+RestartSec=5
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=roku-remote
+
+# Security hardening
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+PrivateTmp=true
+ReadWritePaths=/opt/roku-remote
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,559 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+  <title>Roku Remote</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:         #0c0c14;
+      --surface:    #181828;
+      --surface2:   #222236;
+      --btn:        #262640;
+      --btn-hover:  #32325a;
+      --btn-act:    #5a3e9a;
+      --accent:     #7c5cbf;
+      --accent-h:   #9b6dd0;
+      --text:       #e8e8f2;
+      --text-dim:   #6666a0;
+      --border:     #30304a;
+      --ok:         #7c5cbf;
+      --ok-hover:   #9b6dd0;
+      --power-bg:   #280d0d;
+      --power-text: #ff6b6b;
+      --power-bdr:  #541515;
+    }
+
+    html, body { height: 100%; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding-bottom: 40px;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 390px;
+      padding: 0 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    /* ─── HEADER ─────────────────────────────────── */
+    .header {
+      text-align: center;
+      padding: 20px 0 6px;
+    }
+    .header h1 {
+      font-size: 1.25rem;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      color: var(--text);
+    }
+    .status-row {
+      margin-top: 5px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 7px;
+      font-size: 0.72rem;
+      color: var(--text-dim);
+    }
+    .dot {
+      width: 7px; height: 7px;
+      border-radius: 50%;
+      background: var(--border);
+      flex-shrink: 0;
+      transition: background 0.4s;
+    }
+    .dot.online { background: #2ecc71; }
+    .dot.error  { background: #e74c3c; }
+
+    /* ─── CARD ───────────────────────────────────── */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 16px 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .section-label {
+      font-size: 0.62rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.14em;
+      color: var(--text-dim);
+      text-align: center;
+    }
+    .hr { height: 1px; background: var(--border); }
+
+    /* ─── BUTTON BASE ────────────────────────────── */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 5px;
+      border: none;
+      border-radius: 13px;
+      background: var(--btn);
+      color: var(--text);
+      font-family: inherit;
+      font-size: 0.86rem;
+      font-weight: 600;
+      cursor: pointer;
+      user-select: none;
+      -webkit-tap-highlight-color: transparent;
+      touch-action: manipulation;
+      transition: background 0.1s, transform 0.08s;
+      height: 50px;
+      padding: 0 14px;
+      min-width: 50px;
+    }
+    .btn:hover        { background: var(--btn-hover); }
+    .btn:active       { background: var(--btn-act); transform: scale(0.92); }
+    .btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+    /* ─── ROW ────────────────────────────────────── */
+    .row {
+      display: flex;
+      gap: 8px;
+      justify-content: center;
+    }
+    .row > .btn { flex: 1; }
+
+    /* ─── TOP ROW ────────────────────────────────── */
+    .top-row > .btn {
+      height: 44px;
+      font-size: 0.78rem;
+      max-width: 115px;
+    }
+    .btn-power {
+      background: var(--power-bg) !important;
+      color: var(--power-text) !important;
+      border: 1px solid var(--power-bdr);
+    }
+    .btn-power:hover  { background: #3c1414 !important; }
+    .btn-power:active { background: #651c1c !important; }
+
+    /* ─── D-PAD ──────────────────────────────────── */
+    .dpad-wrap { display: flex; justify-content: center; }
+    .dpad {
+      display: grid;
+      grid-template-columns: 68px 78px 68px;
+      grid-template-rows:    60px 78px 60px;
+      gap: 4px;
+    }
+    .dpad .btn {
+      height: auto;
+      padding: 0;
+      font-size: 1.15rem;
+      border-radius: 10px;
+    }
+    .dp-up    { grid-area: 1/2; border-radius: 12px 12px 5px 5px !important; }
+    .dp-left  { grid-area: 2/1; border-radius: 12px 5px 5px 12px !important; }
+    .dp-ok    {
+      grid-area: 2/2;
+      border-radius: 50% !important;
+      background: var(--ok) !important;
+      font-size: 0.9rem !important;
+      font-weight: 800 !important;
+      letter-spacing: 0.04em;
+      box-shadow: 0 3px 12px rgba(124,92,191,0.45);
+    }
+    .dp-ok:hover  { background: var(--ok-hover) !important; }
+    .dp-ok:active { background: #b080e8 !important; }
+    .dp-right { grid-area: 2/3; border-radius: 5px 12px 12px 5px !important; }
+    .dp-down  { grid-area: 3/2; border-radius: 5px 5px 12px 12px !important; }
+
+    /* ─── APP GRID ───────────────────────────────── */
+    .apps-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+    }
+    @media (max-width: 310px) {
+      .apps-grid { grid-template-columns: repeat(3, 1fr); }
+    }
+    .app-btn {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 5px;
+      background: var(--btn);
+      border: none;
+      border-radius: 12px;
+      padding: 8px 4px 7px;
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+      touch-action: manipulation;
+      transition: background 0.1s, transform 0.08s;
+    }
+    .app-btn:hover  { background: var(--btn-hover); }
+    .app-btn:active { background: var(--btn-act); transform: scale(0.91); }
+    .app-icon {
+      width: 60px; height: 40px;
+      object-fit: contain;
+      border-radius: 5px;
+    }
+    .app-name {
+      font-size: 0.6rem;
+      color: var(--text);
+      text-align: center;
+      max-width: 66px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      line-height: 1.3;
+    }
+    .apps-msg {
+      grid-column: 1 / -1;
+      text-align: center;
+      color: var(--text-dim);
+      font-size: 0.8rem;
+      padding: 10px 0;
+    }
+
+    /* ─── TEXT INPUT ─────────────────────────────── */
+    .input-row {
+      display: flex;
+      gap: 8px;
+    }
+    .text-input {
+      flex: 1;
+      background: var(--btn);
+      border: 1px solid var(--border);
+      border-radius: 11px;
+      color: var(--text);
+      font-family: inherit;
+      font-size: 0.9rem;
+      padding: 11px 13px;
+      outline: none;
+      transition: border-color 0.15s;
+      min-width: 0;
+    }
+    .text-input::placeholder { color: var(--text-dim); }
+    .text-input:focus         { border-color: var(--accent); }
+    .input-btn {
+      background: var(--accent);
+      border: none;
+      border-radius: 11px;
+      color: #fff;
+      font-family: inherit;
+      font-size: 0.84rem;
+      font-weight: 700;
+      padding: 0 14px;
+      cursor: pointer;
+      transition: background 0.1s;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+    .input-btn:hover { background: var(--accent-h); }
+    .input-btn.sec {
+      background: var(--btn);
+      color: var(--text-dim);
+    }
+    .input-btn.sec:hover { background: var(--btn-hover); }
+
+    /* ─── TOAST ──────────────────────────────────── */
+    #toast {
+      position: fixed;
+      bottom: 18px;
+      left: 50%;
+      transform: translateX(-50%) translateY(64px);
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      color: var(--text);
+      border-radius: 22px;
+      padding: 9px 22px;
+      font-size: 0.82rem;
+      pointer-events: none;
+      transition: transform 0.22s ease;
+      z-index: 1000;
+      white-space: nowrap;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.55);
+    }
+    #toast.show { transform: translateX(-50%) translateY(0); }
+
+    /* ─── SPINNER ────────────────────────────────── */
+    .spinner {
+      width: 22px; height: 22px;
+      border: 2px solid var(--border);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 0.75s linear infinite;
+      margin: 10px auto;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+  </style>
+</head>
+<body>
+
+<div class="container">
+
+  <!-- ── Header ─────────────────────────────────── -->
+  <div class="header">
+    <h1>&#9654; Roku Remote</h1>
+    <div class="status-row">
+      <span class="dot" id="dot"></span>
+      <span id="device-name">Connecting&hellip;</span>
+      <span id="active-app"></span>
+    </div>
+  </div>
+
+  <!-- ── Main Remote ────────────────────────────── -->
+  <div class="card">
+
+    <!-- Back / Home / Power -->
+    <div class="row top-row">
+      <button class="btn" data-key="Back">&#8592; Back</button>
+      <button class="btn" data-key="Home">&#8962; Home</button>
+      <button class="btn btn-power" data-key="PowerOff">&#9167; Power</button>
+    </div>
+
+    <div class="hr"></div>
+
+    <!-- D-Pad -->
+    <div class="dpad-wrap">
+      <div class="dpad">
+        <button class="btn dp-up"    data-key="Up">&#9650;</button>
+        <button class="btn dp-left"  data-key="Left">&#9664;</button>
+        <button class="btn dp-ok"    data-key="Select">OK</button>
+        <button class="btn dp-right" data-key="Right">&#9654;</button>
+        <button class="btn dp-down"  data-key="Down">&#9660;</button>
+      </div>
+    </div>
+
+    <div class="hr"></div>
+
+    <!-- Playback -->
+    <div class="section-label">Playback</div>
+    <div class="row">
+      <button class="btn" data-key="InstantReplay" title="Instant Replay">&#9100;</button>
+      <button class="btn" data-key="Play" title="Play / Pause">&#9199;</button>
+      <button class="btn" data-key="Info" title="Options">&#10022; Options</button>
+    </div>
+    <div class="row">
+      <button class="btn" data-key="Rev" title="Rewind">&#9194; Rev</button>
+      <button class="btn" data-key="Fwd" title="Fast Forward">&#9193; Fwd</button>
+    </div>
+
+    <div class="hr"></div>
+
+    <!-- Volume -->
+    <div class="section-label">Volume</div>
+    <div class="row">
+      <button class="btn" data-key="VolumeDown" title="Volume Down">&#128265; Vol&#8722;</button>
+      <button class="btn" data-key="VolumeMute" title="Mute">&#128263; Mute</button>
+      <button class="btn" data-key="VolumeUp"   title="Volume Up">&#128266; Vol+</button>
+    </div>
+
+  </div><!-- /card -->
+
+  <!-- ── App Launcher ───────────────────────────── -->
+  <div class="card">
+    <div class="section-label">Apps</div>
+    <div class="apps-grid" id="apps-grid">
+      <div class="apps-msg"><div class="spinner"></div></div>
+    </div>
+  </div>
+
+  <!-- ── Text Input ─────────────────────────────── -->
+  <div class="card">
+    <div class="section-label">Text Input</div>
+    <div class="input-row">
+      <input class="text-input" id="text-input" type="text"
+             placeholder="Type text to send&hellip;"
+             autocomplete="off" spellcheck="false" />
+      <button class="input-btn" id="send-btn">Send</button>
+      <button class="input-btn sec" id="clear-btn">Clear</button>
+    </div>
+  </div>
+
+</div><!-- /container -->
+
+<div id="toast"></div>
+
+<script>
+'use strict';
+
+// ── Key press ────────────────────────────────────────────────────
+async function sendKey(key) {
+  try {
+    const r = await fetch(`/api/keypress/${encodeURIComponent(key)}`, { method: 'POST' });
+    if (!r.ok) showToast('Error ' + r.status);
+  } catch {
+    showToast('Server unreachable');
+  }
+}
+
+document.querySelectorAll('[data-key]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    sendKey(btn.dataset.key);
+    flashBtn(btn);
+  });
+});
+
+function flashBtn(el) {
+  el.style.transition = 'none';
+  el.style.background = 'var(--btn-act)';
+  el.style.transform  = 'scale(0.92)';
+  requestAnimationFrame(() => requestAnimationFrame(() => {
+    el.style.transition = '';
+    el.style.background = '';
+    el.style.transform  = '';
+  }));
+}
+
+// ── Status ───────────────────────────────────────────────────────
+async function refreshStatus() {
+  const dot  = document.getElementById('dot');
+  const name = document.getElementById('device-name');
+  try {
+    const r = await fetch('/api/device-info');
+    if (!r.ok) throw new Error();
+    const doc = xmlParse(await r.text());
+    name.textContent = doc.querySelector('friendly-device-name')?.textContent ?? 'Roku';
+    dot.className    = 'dot online';
+  } catch {
+    name.textContent = 'Offline';
+    dot.className    = 'dot error';
+  }
+}
+
+async function refreshActiveApp() {
+  const el = document.getElementById('active-app');
+  try {
+    const r = await fetch('/api/active-app');
+    if (!r.ok) return;
+    const doc     = xmlParse(await r.text());
+    const appName = doc.querySelector('active-app > app')?.textContent ?? '';
+    el.textContent = appName ? '\u00b7 ' + appName : '';
+  } catch {
+    el.textContent = '';
+  }
+}
+
+// ── App launcher ─────────────────────────────────────────────────
+async function loadApps() {
+  const grid = document.getElementById('apps-grid');
+  try {
+    const r = await fetch('/api/apps');
+    if (!r.ok) throw new Error();
+    const doc  = xmlParse(await r.text());
+    const apps = [...doc.querySelectorAll('app')];
+    if (apps.length === 0) {
+      grid.innerHTML = '<div class="apps-msg">No apps found</div>';
+      return;
+    }
+    grid.innerHTML = '';
+    apps.forEach(app => {
+      const id   = app.getAttribute('id');
+      const name = app.textContent.trim();
+      const btn  = document.createElement('button');
+      btn.className = 'app-btn';
+      btn.title     = name;
+      btn.innerHTML =
+        `<img class="app-icon" src="/api/icon/${id}" alt="" loading="lazy"
+              onerror="this.style.visibility='hidden'">` +
+        `<span class="app-name">${esc(name)}</span>`;
+      btn.addEventListener('click', () => launchApp(id, name));
+      grid.appendChild(btn);
+    });
+  } catch {
+    grid.innerHTML = '<div class="apps-msg">Could not load apps</div>';
+  }
+}
+
+async function launchApp(id, name) {
+  try {
+    const r = await fetch(`/api/launch/${encodeURIComponent(id)}`, { method: 'POST' });
+    showToast(r.ok ? 'Launching ' + name : 'Launch failed');
+  } catch {
+    showToast('Server unreachable');
+  }
+}
+
+// ── Text input ───────────────────────────────────────────────────
+const textInput = document.getElementById('text-input');
+document.getElementById('send-btn').addEventListener('click', sendText);
+document.getElementById('clear-btn').addEventListener('click', () => {
+  textInput.value = '';
+  textInput.focus();
+});
+textInput.addEventListener('keydown', e => {
+  if (e.key === 'Enter') { e.preventDefault(); sendText(); }
+});
+
+async function sendText() {
+  const text = textInput.value;
+  if (!text) return;
+  try {
+    const r = await fetch('/api/text', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text })
+    });
+    if (r.ok) { textInput.value = ''; showToast('Text sent'); }
+    else       showToast('Send failed');
+  } catch {
+    showToast('Server unreachable');
+  }
+}
+
+// ── Desktop keyboard shortcuts ───────────────────────────────────
+document.addEventListener('keydown', e => {
+  if (document.activeElement === textInput) return;
+  const map = {
+    ArrowUp:    'Up',
+    ArrowDown:  'Down',
+    ArrowLeft:  'Left',
+    ArrowRight: 'Right',
+    Enter:      'Select',
+    Backspace:  'Back',
+    Escape:     'Home',
+    ' ':        'Play',
+  };
+  if (map[e.key]) { e.preventDefault(); sendKey(map[e.key]); }
+});
+
+// ── Helpers ──────────────────────────────────────────────────────
+function xmlParse(str) {
+  return new DOMParser().parseFromString(str, 'text/xml');
+}
+
+function esc(s) {
+  return s
+    .replace(/&/g,  '&amp;')
+    .replace(/</g,  '&lt;')
+    .replace(/>/g,  '&gt;')
+    .replace(/"/g,  '&quot;');
+}
+
+let _toastTimer;
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(_toastTimer);
+  _toastTimer = setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+// ── Init ─────────────────────────────────────────────────────────
+refreshStatus();
+loadApps();
+refreshActiveApp();
+setInterval(refreshActiveApp, 15000);
+setInterval(refreshStatus,    60000);
+</script>
+</body>
+</html>
