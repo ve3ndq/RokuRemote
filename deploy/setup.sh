@@ -27,16 +27,17 @@ else
   echo "✓ User '$APP_USER' already exists"
 fi
 
-# ── 3. Copy application files ───────────────────────────────────
-echo "► Installing app to $APP_DIR..."
-sudo mkdir -p "$APP_DIR"
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-REPO_ROOT="$(dirname "$SCRIPT_DIR")"
-sudo rsync -a --delete \
-  --exclude='node_modules' \
-  --exclude='.git'         \
-  "$REPO_ROOT/" "$APP_DIR/"
-sudo chown -R "$APP_USER:$APP_USER" "$APP_DIR"
+# ── 3. Clone / update application files from git ───────────────
+REPO_URL="https://github.com/ve3ndq/RokuRemote.git"
+echo "► Deploying app to $APP_DIR from $REPO_URL..."
+if [ -d "$APP_DIR/.git" ]; then
+  echo "  (repo exists – pulling latest)"
+  sudo -u "$APP_USER" git -C "$APP_DIR" pull --ff-only
+else
+  sudo mkdir -p "$APP_DIR"
+  sudo chown "$APP_USER:$APP_USER" "$APP_DIR"
+  sudo -u "$APP_USER" git clone "$REPO_URL" "$APP_DIR"
+fi
 
 # ── 4. Install npm dependencies ────────────────────────────────
 echo "► Installing npm dependencies..."
@@ -51,7 +52,7 @@ sudo systemctl restart "$SERVICE"
 
 # ── Done ───────────────────────────────────────────────────────
 LOCAL_IP=$(hostname -I | awk '{print $1}')
-PORT=$(grep -E '^PORT=' "$APP_DIR/.env" "$REPO_ROOT/.env" 2>/dev/null | head -1 | cut -d= -f2 || echo 3000)
+PORT=$(grep -E '^PORT=' "$APP_DIR/.env" 2>/dev/null | head -1 | cut -d= -f2 || echo 3000)
 
 echo ""
 echo "======================================="
