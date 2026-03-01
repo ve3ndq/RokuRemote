@@ -34,14 +34,14 @@ REPO_URL="https://github.com/ve3ndq/RokuRemote.git"
 echo "► Deploying app to $APP_DIR from $REPO_URL..."
 if [ -d "$APP_DIR/.git" ]; then
   echo "  (repo exists – pulling latest)"
-  sudo -u "$APP_USER" git -C "$APP_DIR" pull --ff-only
+  git -C "$APP_DIR" pull --ff-only
 else
   # Remove any non-git remnants (e.g. from a prior rsync deploy), then clone fresh
   sudo rm -rf "$APP_DIR"
   sudo mkdir -p "$(dirname "$APP_DIR")"
-  sudo git clone "$REPO_URL" "$APP_DIR"
-  sudo chown -R "$APP_USER:$APP_USER" "$APP_DIR"
+  git clone "$REPO_URL" "$APP_DIR"
 fi
+sudo chown -R "$APP_USER:$APP_USER" "$APP_DIR"
 
 # ── 4. Install npm dependencies ────────────────────────────────
 echo "► Installing npm dependencies..."
