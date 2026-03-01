@@ -22,8 +22,10 @@ fi
 # ── 2. System user ──────────────────────────────────────────────
 if ! id "$APP_USER" &>/dev/null; then
   echo "► Creating system user '$APP_USER'..."
-  sudo useradd -r -s /usr/sbin/nologin "$APP_USER"
+  sudo useradd -r -m -s /usr/sbin/nologin "$APP_USER"
 else
+  # Ensure home dir exists even if user was created without -m
+  sudo mkhomedir_helper "$APP_USER" 2>/dev/null || true
   echo "✓ User '$APP_USER' already exists"
 fi
 
