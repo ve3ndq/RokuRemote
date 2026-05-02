@@ -158,6 +158,21 @@ app.get('/api/icon/:appId', async (req, res) => {
   }
 });
 
+// ── Shield: Connect ────────────────────────────────────────────────
+app.post('/api/shield/connect', async (req, res) => {
+  try {
+    const { stdout, stderr } = await execAsync(`adb connect ${SHIELD_IP}:${SHIELD_PORT}`);
+    console.log(`[Shield Connect] stdout:`, stdout);
+    console.log(`[Shield Connect] stderr:`, stderr);
+    res.json({ ok: true, message: 'Connected to Shield' });
+  } catch (err) {
+    console.error(`[Shield Connect] Error:`, err.message);
+    console.error(`[Shield Connect] stderr:`, err.stderr);
+    console.error(`[Shield Connect] stdout:`, err.stdout);
+    res.status(502).json({ ok: false, error: err.message || 'Failed to connect' });
+  }
+});
+
 // ── Shield: Keypress ────────────────────────────────────────────────
 app.post('/api/shield/keypress/:keycode', async (req, res) => {
   if (!VALID_KEYCODE.test(req.params.keycode)) {

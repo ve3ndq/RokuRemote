@@ -9,6 +9,8 @@ Type=simple
 User=roku-remote
 Group=roku-remote
 WorkingDirectory=/opt/roku-remote
+Environment="ANDROID_SDK_ROOT=/var/lib/roku-remote"
+ExecStartPre=-/bin/bash -c "adb connect 10.10.176.129:5555"
 ExecStart=/usr/bin/node server.js
 Restart=on-failure
 RestartSec=5
@@ -21,7 +23,7 @@ NoNewPrivileges=true
 ProtectSystem=strict
 ProtectHome=true
 PrivateTmp=true
-ReadWritePaths=/opt/roku-remote
+ReadWritePaths=/opt/roku-remote /var/lib/roku-remote
 
 [Install]
 WantedBy=multi-user.target

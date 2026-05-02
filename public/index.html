@@ -432,6 +432,15 @@
 
   <div class="card">
 
+    <!-- Connection Status -->
+    <div class="section-label">Connection</div>
+    <div class="row">
+      <button class="input-btn" id="shield-connect-btn">Connect</button>
+      <span id="shield-status" style="flex: 1; text-align: center; padding: 11px 0; color: var(--text-dim); font-size: 0.9rem;">Disconnected</span>
+    </div>
+
+    <div class="hr"></div>
+
     <!-- Back / Home / Power -->
     <div class="row top-row">
       <button class="btn shield-key" data-keycode="4">&#8592; Back</button>
@@ -591,6 +600,38 @@ document.querySelectorAll('.shield-key').forEach(btn => {
     sendShieldKeycode(btn.dataset.keycode);
     flashBtn(btn);
   });
+});
+
+// ── Shield: Connect ────────────────────────────────────────────────
+document.getElementById('shield-connect-btn').addEventListener('click', async () => {
+  const btn = document.getElementById('shield-connect-btn');
+  const status = document.getElementById('shield-status');
+  btn.disabled = true;
+  btn.textContent = 'Connecting...';
+
+  try {
+    const r = await fetch('/api/shield/connect', { method: 'POST' });
+    const data = await r.json();
+    if (r.ok) {
+      status.textContent = '✓ Connected';
+      status.style.color = '#2ecc71';
+      showToast('Shield connected');
+      setTimeout(() => {
+        status.textContent = 'Connected';
+      }, 1500);
+    } else {
+      status.textContent = '✗ Failed';
+      status.style.color = '#e74c3c';
+      showToast('Connection failed: ' + (data.error || 'Unknown error'));
+    }
+  } catch {
+    status.textContent = '✗ Error';
+    status.style.color = '#e74c3c';
+    showToast('Server unreachable');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Connect';
+  }
 });
 
 // ── Shield: Power toggle ─────────────────────────────────────────
