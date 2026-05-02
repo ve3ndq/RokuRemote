@@ -4,15 +4,23 @@ require('dotenv').config();
 const express = require('express');
 const axios   = require('axios');
 const path    = require('path');
+const { exec } = require('child_process');
+const { promisify } = require('util');
+
+const execAsync = promisify(exec);
 
 const app  = express();
 const PORT = process.env.PORT || 3000;
 const ROKU_IP   = process.env.ROKU_IP   || '10.10.116.28';
 const ROKU_BASE = `http://${ROKU_IP}:8060`;
 
+const SHIELD_IP   = process.env.SHIELD_IP   || '10.10.176.129';
+const SHIELD_PORT = process.env.SHIELD_PORT || 5555;
+
 // Input validation patterns
 const VALID_KEY = /^[A-Za-z0-9_]+$/;   // Roku ECP key names
 const VALID_ID  = /^\d+$/;              // Roku channel/app IDs
+const VALID_KEYCODE = /^\d+$/;          // Android keyevent codes
 const MAX_TEXT  = 500;
 
 app.use(express.static(path.join(__dirname, 'public')));
@@ -108,7 +116,49 @@ app.get('/api/icon/:appId', async (req, res) => {
   }
 });
 
+// ── Shield: Keypress ────────────────────────────────────────────────
+app.post('/api/shield/keypress/:keycode', async (req, res) => {
+  if (!VALID_KEYCODE.test(req.params.keycode)) {
+    return res.status(400).json({ error: 'Invalid keycode' });
+  }
+  try {
+    const cmd = `adb -s ${SHIELD_IP}:${SHIELD_PORT} shell input keyevent ${req.params.keycode}`;
+    await execAsync(cmd);
+    res.json({ ok: true });
+  } catch {
+    res.status(502).json({ error: 'Failed to reach Shield' });
+  }
+});
+
+// ── Shield: Text input ──────────────────────────────────────────────
+app.post('/api/shield/text', async (req, res) => {
+  const { text } = req.body;
+  if (typeof text !== 'string' || text.length === 0 || text.length > MAX_TEXT) {
+    return res.status(400).json({ error: 'Invalid text' });
+  }
+  try {
+    const escapedText = text.replace(/"/g, '\\"').replace(/\$/g, '\\$');
+    const cmd = `adb -s ${SHIELD_IP}:${SHIELD_PORT} shell input text "${escapedText}"`;
+    await execAsync(cmd);
+    res.json({ ok: true });
+  } catch {
+    res.status(502).json({ error: 'Failed to reach Shield' });
+  }
+});
+
+// ── Shield: Power toggle ────────────────────────────────────────────
+app.post('/api/shield/power', async (req, res) => {
+  try {
+    const cmd = `adb -s ${SHIELD_IP}:${SHIELD_PORT} shell input keyevent 26`;
+    await execAsync(cmd);
+    res.json({ ok: true });
+  } catch {
+    res.status(502).json({ error: 'Failed to reach Shield' });
+  }
+});
+
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`Roku Web Remote  →  http://0.0.0.0:${PORT}`);
   console.log(`Roku ECP target  →  ${ROKU_BASE}`);
+  console.log(`Shield ADB target →  ${SHIELD_IP}:${SHIELD_PORT}`);
 });
