@@ -4,6 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
   <title>Web Remote</title>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 160'><rect x='15' y='10' width='70' height='140' rx='12' fill='%23262640' stroke='%237c5cbf' stroke-width='2'/><rect x='25' y='25' width='50' height='30' rx='4' fill='%235a3e9a'/><circle cx='35' cy='50' r='3' fill='%23e8e8f2'/><circle cx='50' cy='50' r='3' fill='%23e8e8f2'/><circle cx='65' cy='50' r='3' fill='%23e8e8f2'/><circle cx='42' cy='65' r='4' fill='%237c5cbf'/><circle cx='58' cy='65' r='4' fill='%237c5cbf'/><circle cx='42' cy='80' r='4' fill='%237c5cbf'/><circle cx='58' cy='80' r='4' fill='%237c5cbf'/><circle cx='50' cy='100' r='5' fill='%237c5cbf'/><rect x='30' y='115' width='40' height='20' rx='3' fill='%235a3e9a'/></svg>"  />
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -321,6 +322,7 @@
     }
     .device-content { display: none; }
     .device-content.active { display: block; }
+
   </style>
 </head>
 <body>
@@ -333,6 +335,7 @@
     <div class="tabs">
       <button class="tab-btn active" data-device="roku">Roku</button>
       <button class="tab-btn" data-device="shield">Shield</button>
+      <button class="tab-btn" data-device="pioneer">Pioneer</button>
     </div>
     <div class="status-row">
       <span class="dot" id="dot"></span>
@@ -451,6 +454,23 @@
 
     <div class="hr"></div>
 
+    <!-- Options -->
+    <div class="section-label">Options</div>
+    <div class="row">
+      <button class="btn shield-key" data-keycode="82" title="Menu">&#10022; Menu</button>
+    </div>
+
+    <div class="hr"></div>
+
+    <!-- Volume -->
+    <div class="section-label">Volume</div>
+    <div class="row">
+      <button class="btn shield-key" data-keycode="25" title="Volume Down">&#128265; Vol&#8722;</button>
+      <button class="btn shield-key" data-keycode="24" title="Volume Up">&#128266; Vol+</button>
+    </div>
+
+    <div class="hr"></div>
+
     <!-- Text Input -->
     <div class="section-label">Text Input</div>
     <div class="input-row">
@@ -464,6 +484,56 @@
   </div><!-- /card -->
 
   </div><!-- /shield-content -->
+
+  <!-- ── Pioneer Receiver ───────────────────────── -->
+  <div class="device-content" id="pioneer-content">
+
+  <div class="card">
+
+    <!-- Power -->
+    <div class="section-label">Power</div>
+    <div class="row">
+      <button class="btn" id="pioneer-power-on" title="Power On">&#128261; On</button>
+      <button class="btn btn-power" id="pioneer-power-off" title="Power Off">&#9167; Off</button>
+    </div>
+
+    <div class="hr"></div>
+
+    <!-- Volume -->
+    <div class="section-label">Volume</div>
+    <div class="row">
+      <button class="btn" id="pioneer-vol-down" title="Volume Down">&#128265; Vol&#8722;</button>
+      <button class="btn" id="pioneer-vol-up" title="Volume Up">&#128266; Vol+</button>
+    </div>
+
+    <div class="hr"></div>
+
+    <!-- Mute -->
+    <div class="section-label">Mute</div>
+    <div class="row">
+      <button class="btn btn-power" id="pioneer-mute-btn" title="Mute">&#128263; Mute</button>
+    </div>
+
+    <div class="hr"></div>
+
+    <!-- Inputs -->
+    <div class="section-label">Inputs</div>
+    <div class="row">
+      <button class="btn pioneer-input" data-input="01" title="HDMI1">HDMI1</button>
+      <button class="btn pioneer-input" data-input="02" title="HDMI2">HDMI2</button>
+      <button class="btn pioneer-input" data-input="03" title="HDMI3">HDMI3</button>
+      <button class="btn pioneer-input" data-input="04" title="HDMI4">HDMI4</button>
+    </div>
+    <div class="row">
+      <button class="btn pioneer-input" data-input="05" title="Audio In">Audio In</button>
+      <button class="btn pioneer-input" data-input="06" title="Optical">Optical</button>
+      <button class="btn pioneer-input" data-input="07" title="Coax">Coax</button>
+      <button class="btn pioneer-input" data-input="00" title="DVD">DVD</button>
+    </div>
+
+  </div><!-- /card -->
+
+  </div><!-- /pioneer-content -->
 
 </div><!-- /container -->
 
@@ -483,7 +553,7 @@ document.querySelectorAll('.tab-btn').forEach(tab => {
     tab.classList.add('active');
     document.getElementById(device + '-content').classList.add('active');
     currentDevice = device;
-    const titles = { roku: '&#9654; Roku Remote', shield: '&#9654; Shield Remote' };
+    const titles = { roku: '&#9654; Roku Remote', shield: '&#9654; Shield Remote', pioneer: '&#9654; Pioneer VSX-832' };
     document.getElementById('page-title').innerHTML = titles[device];
     refreshStatus();
   });
@@ -534,6 +604,87 @@ document.getElementById('shield-power-btn').addEventListener('click', async () =
   flashBtn(document.getElementById('shield-power-btn'));
 });
 
+// ── Pioneer: Volume control ─────────────────────────────────────────
+let pioneerMuteOn = false;
+
+document.getElementById('pioneer-vol-down').addEventListener('click', async () => {
+  try {
+    const r = await fetch('/api/pioneer/volume-down', { method: 'POST' });
+    if (!r.ok) showToast('Error ' + r.status);
+  } catch {
+    showToast('Server unreachable');
+  }
+  flashBtn(document.getElementById('pioneer-vol-down'));
+});
+
+document.getElementById('pioneer-vol-up').addEventListener('click', async () => {
+  try {
+    const r = await fetch('/api/pioneer/volume-up', { method: 'POST' });
+    if (!r.ok) showToast('Error ' + r.status);
+  } catch {
+    showToast('Server unreachable');
+  }
+  flashBtn(document.getElementById('pioneer-vol-up'));
+});
+
+document.getElementById('pioneer-mute-btn').addEventListener('click', async () => {
+  try {
+    const r = await fetch('/api/pioneer/mute', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ on: !pioneerMuteOn })
+    });
+    if (r.ok) {
+      pioneerMuteOn = !pioneerMuteOn;
+      const btn = document.getElementById('pioneer-mute-btn');
+      btn.textContent = pioneerMuteOn ? '🔇 Muted' : '🔉 Mute';
+    } else {
+      showToast('Error ' + r.status);
+    }
+  } catch {
+    showToast('Server unreachable');
+  }
+  flashBtn(document.getElementById('pioneer-mute-btn'));
+});
+
+// ── Pioneer: Power On/Off ────────────────────────────────────────
+document.getElementById('pioneer-power-on').addEventListener('click', async () => {
+  try {
+    const r = await fetch('/api/pioneer/power/on', { method: 'POST' });
+    if (!r.ok) showToast('Error ' + r.status);
+    else showToast('Power On');
+  } catch {
+    showToast('Server unreachable');
+  }
+  flashBtn(document.getElementById('pioneer-power-on'));
+});
+
+document.getElementById('pioneer-power-off').addEventListener('click', async () => {
+  try {
+    const r = await fetch('/api/pioneer/power/off', { method: 'POST' });
+    if (!r.ok) showToast('Error ' + r.status);
+    else showToast('Power Off');
+  } catch {
+    showToast('Server unreachable');
+  }
+  flashBtn(document.getElementById('pioneer-power-off'));
+});
+
+// ── Pioneer: Input Selection ─────────────────────────────────────
+document.querySelectorAll('.pioneer-input').forEach(btn => {
+  btn.addEventListener('click', async () => {
+    const input = btn.dataset.input;
+    try {
+      const r = await fetch(`/api/pioneer/input/${input}`, { method: 'POST' });
+      if (r.ok) showToast(`Input: ${btn.textContent}`);
+      else showToast('Error ' + r.status);
+    } catch {
+      showToast('Server unreachable');
+    }
+    flashBtn(btn);
+  });
+});
+
 function flashBtn(el) {
   el.style.transition = 'none';
   el.style.background = 'var(--btn-act)';
@@ -564,8 +715,12 @@ async function refreshStatus() {
       dot.className    = 'dot error';
       appEl.textContent = '';
     }
-  } else {
+  } else if (currentDevice === 'shield') {
     name.textContent = 'Shield';
+    dot.className = 'dot online';
+    appEl.textContent = '';
+  } else if (currentDevice === 'pioneer') {
+    name.textContent = 'Pioneer VSX-832';
     dot.className = 'dot online';
     appEl.textContent = '';
   }

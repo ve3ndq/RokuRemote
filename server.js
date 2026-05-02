@@ -4,6 +4,7 @@ require('dotenv').config();
 const express = require('express');
 const axios   = require('axios');
 const path    = require('path');
+const net     = require('net');
 const { exec } = require('child_process');
 const { promisify } = require('util');
 
@@ -17,11 +18,52 @@ const ROKU_BASE = `http://${ROKU_IP}:8060`;
 const SHIELD_IP   = process.env.SHIELD_IP   || '10.10.176.129';
 const SHIELD_PORT = process.env.SHIELD_PORT || 5555;
 
+const PIONEER_IP   = process.env.PIONEER_IP   || '10.10.48.10';
+const PIONEER_PORT = process.env.PIONEER_PORT || 8102;
+
 // Input validation patterns
 const VALID_KEY = /^[A-Za-z0-9_]+$/;   // Roku ECP key names
 const VALID_ID  = /^\d+$/;              // Roku channel/app IDs
 const VALID_KEYCODE = /^\d+$/;          // Android keyevent codes
 const MAX_TEXT  = 500;
+
+// Pioneer eISCP command helper with proper packet header
+function sendPioneerCommand(cmd) {
+  return new Promise((resolve, reject) => {
+    try {
+      // Build eISCP packet with proper header
+      const data = Buffer.from(cmd + '\r');
+      const header = Buffer.alloc(16);
+      header.write('ISCP', 0, 'ascii');
+      header.writeUInt32BE(16, 4);           // header size
+      header.writeUInt32BE(data.length, 8); // data size
+      header.writeUInt8(1, 12);              // version
+      // bytes 13-15 are reserved (already 0)
+
+      const packet = Buffer.concat([header, data]);
+
+      const socket = net.createConnection({ host: PIONEER_IP, port: PIONEER_PORT });
+
+      socket.on('connect', () => {
+        socket.write(packet);
+      });
+
+      socket.on('data', () => {
+        socket.end();
+        resolve();
+      });
+
+      socket.on('error', (err) => reject(err));
+
+      socket.setTimeout(3000, () => {
+        socket.destroy();
+        reject(new Error('Timeout'));
+      });
+    } catch (err) {
+      reject(err);
+    }
+  });
+}
 
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(express.json());
@@ -157,8 +199,71 @@ app.post('/api/shield/power', async (req, res) => {
   }
 });
 
+// ── Pioneer: Volume Up ──────────────────────────────────────────────
+app.post('/api/pioneer/volume-up', async (req, res) => {
+  try {
+    await sendPioneerCommand('!1MVLUP');
+    res.json({ ok: true });
+  } catch {
+    res.status(502).json({ error: 'Failed to reach Pioneer' });
+  }
+});
+
+// ── Pioneer: Volume Down ────────────────────────────────────────────
+app.post('/api/pioneer/volume-down', async (req, res) => {
+  try {
+    await sendPioneerCommand('!1MVLDN');
+    res.json({ ok: true });
+  } catch {
+    res.status(502).json({ error: 'Failed to reach Pioneer' });
+  }
+});
+
+// ── Pioneer: Mute ──────────────────────────────────────────────────
+app.post('/api/pioneer/mute', async (req, res) => {
+  try {
+    const { on } = req.body;
+    const cmd = on ? '!1AMT01' : '!1AMT00';
+    await sendPioneerCommand(cmd);
+    res.json({ ok: true });
+  } catch {
+    res.status(502).json({ error: 'Failed to reach Pioneer' });
+  }
+});
+
+// ── Pioneer: Power On/Off ──────────────────────────────────────────
+app.post('/api/pioneer/power/:state', async (req, res) => {
+  const state = req.params.state;
+  if (!['on', 'off'].includes(state)) {
+    return res.status(400).json({ error: 'Invalid state' });
+  }
+  try {
+    const cmd = state === 'on' ? '!1PWR01' : '!1PWR00';
+    await sendPioneerCommand(cmd);
+    res.json({ ok: true });
+  } catch {
+    res.status(502).json({ error: 'Failed to reach Pioneer' });
+  }
+});
+
+// ── Pioneer: Input/Source ──────────────────────────────────────────
+app.post('/api/pioneer/input/:input', async (req, res) => {
+  const input = req.params.input;
+  if (!/^[0-9a-fA-F]{2}$/.test(input)) {
+    return res.status(400).json({ error: 'Invalid input' });
+  }
+  try {
+    const cmd = `!1FN${input.toUpperCase()}`;
+    await sendPioneerCommand(cmd);
+    res.json({ ok: true });
+  } catch {
+    res.status(502).json({ error: 'Failed to reach Pioneer' });
+  }
+});
+
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`Roku Web Remote  →  http://0.0.0.0:${PORT}`);
   console.log(`Roku ECP target  →  ${ROKU_BASE}`);
   console.log(`Shield ADB target →  ${SHIELD_IP}:${SHIELD_PORT}`);
+  console.log(`Pioneer target   →  ${PIONEER_IP}:${PIONEER_PORT}`);
 });
