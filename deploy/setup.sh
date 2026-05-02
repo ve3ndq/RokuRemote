@@ -1,14 +1,16 @@
 #!/usr/bin/env bash
-# deploy/setup.sh  –  Install Roku Web Remote on a Debian/Ubuntu VM
+# deploy/setup.sh  –  Install Roku Web Remote on Debian/Ubuntu
+# Supports: Roku TV, NVIDIA Shield (ADB), Pioneer Receiver (eISCP)
 set -euo pipefail
 
 APP_DIR="/opt/roku-remote"
 SERVICE="roku-remote"
 APP_USER="roku-remote"
 
-echo "======================================="
-echo "  Roku Web Remote  -  Debian Setup"
-echo "======================================="
+echo "=========================================="
+echo "  Roku Web Remote - Debian/Ubuntu Setup"
+echo "  (Roku + Shield + Pioneer)"
+echo "=========================================="
 
 # ── 1. Node.js 20.x ────────────────────────────────────────────
 if ! command -v node &>/dev/null; then
@@ -35,6 +37,15 @@ else
   # Ensure home dir exists even if user was created without -m
   sudo mkhomedir_helper "$APP_USER" 2>/dev/null || true
   echo "✓ User '$APP_USER' already exists"
+fi
+
+# ── 2a. ADB home directory (for Shield support) ───────────────────
+APP_HOME=$(getent passwd "$APP_USER" | cut -d: -f6)
+if [ -n "$APP_HOME" ] && [ "$APP_HOME" != "/" ]; then
+  echo "► Setting up ADB home directory..."
+  sudo mkdir -p "$APP_HOME/.android"
+  sudo chown "$APP_USER:$APP_USER" "$APP_HOME/.android"
+  sudo chmod 700 "$APP_HOME/.android"
 fi
 
 # ── 3. Clone / update application files from git ───────────────
@@ -67,14 +78,23 @@ LOCAL_IP=$(hostname -I | awk '{print $1}')
 PORT=$(grep -E '^PORT=' "$APP_DIR/.env" 2>/dev/null | head -1 | cut -d= -f2 || echo 3000)
 
 echo ""
-echo "======================================="
+echo "=========================================="
 echo "  Done! Remote available at:"
 echo "  http://$LOCAL_IP:$PORT"
-echo "======================================="
+echo "=========================================="
 echo ""
-echo "Shield setup (if using NVIDIA Shield):"
-echo "  1. On Shield device: Settings > Developer options > ADB debugging (ON)"
-echo "  2. Connect: adb connect {SHIELD_IP}:5555"
-echo "  3. Configure in .env: SHIELD_IP={SHIELD_IP}"
+echo "Next steps:"
+echo ""
+echo "1. NVIDIA Shield setup (if using):"
+echo "   • On Shield: Settings > Developer options > ADB debugging (ON)"
+echo "   • Click Connect button in Shield tab of remote UI"
+echo "   • Accept authorization prompt on Shield device"
+echo "   • Configure .env: SHIELD_IP={SHIELD_IP}"
+echo ""
+echo "2. Pioneer receiver setup (if using):"
+echo "   • Ensure receiver is powered on and reachable"
+echo "   • Configure .env: PIONEER_IP={IP} PIONEER_PORT=60128"
+echo ""
+echo "3. View service status:"
 echo ""
 sudo systemctl status "$SERVICE" --no-pager -l
