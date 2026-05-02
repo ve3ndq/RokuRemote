@@ -199,11 +199,16 @@ app.post('/api/shield/power', async (req, res) => {
   }
 });
 
+// Pioneer volume state (tracks current volume for up/down commands)
+let pioneerVolume = 0x50; // Start at mid-level (80 decimal)
+
 // ── Pioneer: Volume Up ──────────────────────────────────────────────
 app.post('/api/pioneer/volume-up', async (req, res) => {
   try {
-    await sendPioneerCommand('!1MVLUP');
-    res.json({ ok: true });
+    if (pioneerVolume < 0x60) pioneerVolume += 3; // Increment by 3, max at 96
+    const cmd = `!1MVL${pioneerVolume.toString(16).toUpperCase().padStart(2, '0')}`;
+    await sendPioneerCommand(cmd);
+    res.json({ ok: true, volume: pioneerVolume });
   } catch {
     res.status(502).json({ error: 'Failed to reach Pioneer' });
   }
@@ -212,8 +217,10 @@ app.post('/api/pioneer/volume-up', async (req, res) => {
 // ── Pioneer: Volume Down ────────────────────────────────────────────
 app.post('/api/pioneer/volume-down', async (req, res) => {
   try {
-    await sendPioneerCommand('!1MVLDN');
-    res.json({ ok: true });
+    if (pioneerVolume > 0) pioneerVolume -= 3; // Decrement by 3, min at 0
+    const cmd = `!1MVL${pioneerVolume.toString(16).toUpperCase().padStart(2, '0')}`;
+    await sendPioneerCommand(cmd);
+    res.json({ ok: true, volume: pioneerVolume });
   } catch {
     res.status(502).json({ error: 'Failed to reach Pioneer' });
   }
