@@ -19,6 +19,14 @@ else
   echo "✓ Node.js $(node --version) already present"
 fi
 
+# ── 1a. ADB tools (for Shield support) ─────────────────────────
+if ! command -v adb &>/dev/null; then
+  echo "► Installing ADB tools..."
+  sudo apt-get install -y android-tools-adb
+else
+  echo "✓ ADB $(adb --version | head -1) already present"
+fi
+
 # ── 2. System user ──────────────────────────────────────────────
 if ! id "$APP_USER" &>/dev/null; then
   echo "► Creating system user '$APP_USER'..."
@@ -63,5 +71,10 @@ echo "======================================="
 echo "  Done! Remote available at:"
 echo "  http://$LOCAL_IP:$PORT"
 echo "======================================="
+echo ""
+echo "Shield setup (if using NVIDIA Shield):"
+echo "  1. On Shield device: Settings > Developer options > ADB debugging (ON)"
+echo "  2. Connect: adb connect {SHIELD_IP}:5555"
+echo "  3. Configure in .env: SHIELD_IP={SHIELD_IP}"
 echo ""
 sudo systemctl status "$SERVICE" --no-pager -l

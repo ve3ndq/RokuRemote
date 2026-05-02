@@ -3,7 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
-  <title>Roku Remote</title>
+  <title>Web Remote</title>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 160'><rect x='15' y='10' width='70' height='140' rx='12' fill='%23262640' stroke='%237c5cbf' stroke-width='2'/><rect x='25' y='25' width='50' height='30' rx='4' fill='%235a3e9a'/><circle cx='35' cy='50' r='3' fill='%23e8e8f2'/><circle cx='50' cy='50' r='3' fill='%23e8e8f2'/><circle cx='65' cy='50' r='3' fill='%23e8e8f2'/><circle cx='42' cy='65' r='4' fill='%237c5cbf'/><circle cx='58' cy='65' r='4' fill='%237c5cbf'/><circle cx='42' cy='80' r='4' fill='%237c5cbf'/><circle cx='58' cy='80' r='4' fill='%237c5cbf'/><circle cx='50' cy='100' r='5' fill='%237c5cbf'/><rect x='30' y='115' width='40' height='20' rx='3' fill='%235a3e9a'/></svg>"  />
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -294,6 +295,34 @@
       margin: 10px auto;
     }
     @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ─── TABS ───────────────────────────────────── */
+    .tabs {
+      display: flex;
+      gap: 6px;
+      justify-content: center;
+      margin-bottom: 10px;
+    }
+    .tab-btn {
+      background: var(--btn);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      color: var(--text-dim);
+      padding: 8px 18px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.1s, color 0.1s;
+    }
+    .tab-btn:hover { background: var(--btn-hover); }
+    .tab-btn.active {
+      background: var(--accent);
+      color: #fff;
+      border-color: var(--accent);
+    }
+    .device-content { display: none; }
+    .device-content.active { display: block; }
+
   </style>
 </head>
 <body>
@@ -302,7 +331,12 @@
 
   <!-- ── Header ─────────────────────────────────── -->
   <div class="header">
-    <h1>&#9654; Roku Remote</h1>
+    <h1 id="page-title">&#9654; Roku Remote</h1>
+    <div class="tabs">
+      <button class="tab-btn active" data-device="roku">Roku</button>
+      <button class="tab-btn" data-device="shield">Shield</button>
+      <button class="tab-btn" data-device="pioneer">Pioneer</button>
+    </div>
     <div class="status-row">
       <span class="dot" id="dot"></span>
       <span id="device-name">Connecting&hellip;</span>
@@ -310,7 +344,8 @@
     </div>
   </div>
 
-  <!-- ── Main Remote ────────────────────────────── -->
+  <!-- ── Roku Remote ────────────────────────────── -->
+  <div class="device-content active" id="roku-content">
   <div class="card">
 
     <!-- Back / Home / Power -->
@@ -357,6 +392,17 @@
       <button class="btn" data-key="VolumeUp"   title="Volume Up">&#128266; Vol+</button>
     </div>
 
+    <div class="hr"></div>
+
+    <!-- Inputs -->
+    <div class="section-label">Inputs</div>
+    <div class="row">
+      <button class="btn" data-key="InputHDMI1" title="HDMI 1">HDMI 1</button>
+      <button class="btn" data-key="InputHDMI2" title="HDMI 2">HDMI 2</button>
+      <button class="btn" data-key="InputHDMI3" title="HDMI 3">HDMI 3</button>
+      <button class="btn" data-key="InputHDMI4" title="HDMI 4">HDMI 4</button>
+    </div>
+
   </div><!-- /card -->
 
   <!-- ── App Launcher ───────────────────────────── -->
@@ -371,13 +417,123 @@
   <div class="card">
     <div class="section-label">Text Input</div>
     <div class="input-row">
-      <input class="text-input" id="text-input" type="text"
+      <input class="text-input" id="roku-text-input" type="text"
              placeholder="Type text to send&hellip;"
              autocomplete="off" spellcheck="false" />
-      <button class="input-btn" id="send-btn">Send</button>
-      <button class="input-btn sec" id="clear-btn">Clear</button>
+      <button class="input-btn" id="roku-send-btn">Send</button>
+      <button class="input-btn sec" id="roku-clear-btn">Clear</button>
     </div>
   </div>
+
+  </div><!-- /roku-content -->
+
+  <!-- ── Shield Remote ──────────────────────────── -->
+  <div class="device-content" id="shield-content">
+
+  <div class="card">
+
+    <!-- Back / Home / Power -->
+    <div class="row top-row">
+      <button class="btn shield-key" data-keycode="4">&#8592; Back</button>
+      <button class="btn shield-key" data-keycode="3">&#8962; Home</button>
+      <button class="btn btn-power" id="shield-power-btn">&#9167; Power</button>
+    </div>
+
+    <div class="hr"></div>
+
+    <!-- D-Pad -->
+    <div class="dpad-wrap">
+      <div class="dpad">
+        <button class="btn dp-up shield-key"    data-keycode="19">&#9650;</button>
+        <button class="btn dp-left shield-key"  data-keycode="21">&#9664;</button>
+        <button class="btn dp-ok shield-key"    data-keycode="23">OK</button>
+        <button class="btn dp-right shield-key" data-keycode="22">&#9654;</button>
+        <button class="btn dp-down shield-key"  data-keycode="20">&#9660;</button>
+      </div>
+    </div>
+
+    <div class="hr"></div>
+
+    <!-- Options -->
+    <div class="section-label">Options</div>
+    <div class="row">
+      <button class="btn shield-key" data-keycode="82" title="Menu">&#10022; Menu</button>
+    </div>
+
+    <div class="hr"></div>
+
+    <!-- Volume -->
+    <div class="section-label">Volume</div>
+    <div class="row">
+      <button class="btn shield-key" data-keycode="25" title="Volume Down">&#128265; Vol&#8722;</button>
+      <button class="btn shield-key" data-keycode="24" title="Volume Up">&#128266; Vol+</button>
+    </div>
+
+    <div class="hr"></div>
+
+    <!-- Text Input -->
+    <div class="section-label">Text Input</div>
+    <div class="input-row">
+      <input class="text-input" id="shield-text-input" type="text"
+             placeholder="Type text to send&hellip;"
+             autocomplete="off" spellcheck="false" />
+      <button class="input-btn" id="shield-send-btn">Send</button>
+      <button class="input-btn sec" id="shield-clear-btn">Clear</button>
+    </div>
+
+  </div><!-- /card -->
+
+  </div><!-- /shield-content -->
+
+  <!-- ── Pioneer Receiver ───────────────────────── -->
+  <div class="device-content" id="pioneer-content">
+
+  <div class="card">
+
+    <!-- Power -->
+    <div class="section-label">Power</div>
+    <div class="row">
+      <button class="btn" id="pioneer-power-on" title="Power On">&#128261; On</button>
+      <button class="btn btn-power" id="pioneer-power-off" title="Power Off">&#9167; Off</button>
+    </div>
+
+    <div class="hr"></div>
+
+    <!-- Volume -->
+    <div class="section-label">Volume</div>
+    <div class="row">
+      <button class="btn" id="pioneer-vol-down" title="Volume Down">&#128265; Vol&#8722;</button>
+      <button class="btn" id="pioneer-vol-up" title="Volume Up">&#128266; Vol+</button>
+    </div>
+
+    <div class="hr"></div>
+
+    <!-- Mute -->
+    <div class="section-label">Mute</div>
+    <div class="row">
+      <button class="btn btn-power" id="pioneer-mute-btn" title="Mute">&#128263; Mute</button>
+    </div>
+
+    <div class="hr"></div>
+
+    <!-- Inputs -->
+    <div class="section-label">Inputs</div>
+    <div class="row">
+      <button class="btn pioneer-input" data-input="01" title="HDMI1">HDMI1</button>
+      <button class="btn pioneer-input" data-input="02" title="HDMI2">HDMI2</button>
+      <button class="btn pioneer-input" data-input="03" title="HDMI3">HDMI3</button>
+      <button class="btn pioneer-input" data-input="04" title="HDMI4">HDMI4</button>
+    </div>
+    <div class="row">
+      <button class="btn pioneer-input" data-input="05" title="Audio In">Audio In</button>
+      <button class="btn pioneer-input" data-input="06" title="Optical">Optical</button>
+      <button class="btn pioneer-input" data-input="07" title="Coax">Coax</button>
+      <button class="btn pioneer-input" data-input="00" title="DVD">DVD</button>
+    </div>
+
+  </div><!-- /card -->
+
+  </div><!-- /pioneer-content -->
 
 </div><!-- /container -->
 
@@ -386,8 +542,25 @@
 <script>
 'use strict';
 
-// ── Key press ────────────────────────────────────────────────────
-async function sendKey(key) {
+let currentDevice = 'roku';
+
+// ── Tab switching ───────────────────────────────────────────────
+document.querySelectorAll('.tab-btn').forEach(tab => {
+  tab.addEventListener('click', () => {
+    const device = tab.dataset.device;
+    document.querySelectorAll('.tab-btn').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.device-content').forEach(c => c.classList.remove('active'));
+    tab.classList.add('active');
+    document.getElementById(device + '-content').classList.add('active');
+    currentDevice = device;
+    const titles = { roku: '&#9654; Roku Remote', shield: '&#9654; Shield Remote', pioneer: '&#9654; Pioneer VSX-832' };
+    document.getElementById('page-title').innerHTML = titles[device];
+    refreshStatus();
+  });
+});
+
+// ── Roku: Key press ──────────────────────────────────────────────
+async function sendRokuKey(key) {
   try {
     const r = await fetch(`/api/keypress/${encodeURIComponent(key)}`, { method: 'POST' });
     if (!r.ok) showToast('Error ' + r.status);
@@ -396,9 +569,118 @@ async function sendKey(key) {
   }
 }
 
-document.querySelectorAll('[data-key]').forEach(btn => {
+document.querySelectorAll('#roku-content [data-key]').forEach(btn => {
   btn.addEventListener('click', () => {
-    sendKey(btn.dataset.key);
+    sendRokuKey(btn.dataset.key);
+    flashBtn(btn);
+  });
+});
+
+// ── Shield: Key press ────────────────────────────────────────────
+async function sendShieldKeycode(keycode) {
+  try {
+    const r = await fetch(`/api/shield/keypress/${encodeURIComponent(keycode)}`, { method: 'POST' });
+    if (!r.ok) showToast('Error ' + r.status);
+  } catch {
+    showToast('Server unreachable');
+  }
+}
+
+document.querySelectorAll('.shield-key').forEach(btn => {
+  btn.addEventListener('click', () => {
+    sendShieldKeycode(btn.dataset.keycode);
+    flashBtn(btn);
+  });
+});
+
+// ── Shield: Power toggle ─────────────────────────────────────────
+document.getElementById('shield-power-btn').addEventListener('click', async () => {
+  try {
+    const r = await fetch('/api/shield/power', { method: 'POST' });
+    if (!r.ok) showToast('Error ' + r.status);
+  } catch {
+    showToast('Server unreachable');
+  }
+  flashBtn(document.getElementById('shield-power-btn'));
+});
+
+// ── Pioneer: Volume control ─────────────────────────────────────────
+let pioneerMuteOn = false;
+
+document.getElementById('pioneer-vol-down').addEventListener('click', async () => {
+  try {
+    const r = await fetch('/api/pioneer/volume-down', { method: 'POST' });
+    if (!r.ok) showToast('Error ' + r.status);
+  } catch {
+    showToast('Server unreachable');
+  }
+  flashBtn(document.getElementById('pioneer-vol-down'));
+});
+
+document.getElementById('pioneer-vol-up').addEventListener('click', async () => {
+  try {
+    const r = await fetch('/api/pioneer/volume-up', { method: 'POST' });
+    if (!r.ok) showToast('Error ' + r.status);
+  } catch {
+    showToast('Server unreachable');
+  }
+  flashBtn(document.getElementById('pioneer-vol-up'));
+});
+
+document.getElementById('pioneer-mute-btn').addEventListener('click', async () => {
+  try {
+    const r = await fetch('/api/pioneer/mute', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ on: !pioneerMuteOn })
+    });
+    if (r.ok) {
+      pioneerMuteOn = !pioneerMuteOn;
+      const btn = document.getElementById('pioneer-mute-btn');
+      btn.textContent = pioneerMuteOn ? '🔇 Muted' : '🔉 Mute';
+    } else {
+      showToast('Error ' + r.status);
+    }
+  } catch {
+    showToast('Server unreachable');
+  }
+  flashBtn(document.getElementById('pioneer-mute-btn'));
+});
+
+// ── Pioneer: Power On/Off ────────────────────────────────────────
+document.getElementById('pioneer-power-on').addEventListener('click', async () => {
+  try {
+    const r = await fetch('/api/pioneer/power/on', { method: 'POST' });
+    if (!r.ok) showToast('Error ' + r.status);
+    else showToast('Power On');
+  } catch {
+    showToast('Server unreachable');
+  }
+  flashBtn(document.getElementById('pioneer-power-on'));
+});
+
+document.getElementById('pioneer-power-off').addEventListener('click', async () => {
+  try {
+    const r = await fetch('/api/pioneer/power/off', { method: 'POST' });
+    if (!r.ok) showToast('Error ' + r.status);
+    else showToast('Power Off');
+  } catch {
+    showToast('Server unreachable');
+  }
+  flashBtn(document.getElementById('pioneer-power-off'));
+});
+
+// ── Pioneer: Input Selection ─────────────────────────────────────
+document.querySelectorAll('.pioneer-input').forEach(btn => {
+  btn.addEventListener('click', async () => {
+    const input = btn.dataset.input;
+    try {
+      const r = await fetch(`/api/pioneer/input/${input}`, { method: 'POST' });
+      if (r.ok) showToast(`Input: ${btn.textContent}`);
+      else showToast('Error ' + r.status);
+    } catch {
+      showToast('Server unreachable');
+    }
     flashBtn(btn);
   });
 });
@@ -418,15 +700,29 @@ function flashBtn(el) {
 async function refreshStatus() {
   const dot  = document.getElementById('dot');
   const name = document.getElementById('device-name');
-  try {
-    const r = await fetch('/api/device-info');
-    if (!r.ok) throw new Error();
-    const doc = xmlParse(await r.text());
-    name.textContent = doc.querySelector('friendly-device-name')?.textContent ?? 'Roku';
-    dot.className    = 'dot online';
-  } catch {
-    name.textContent = 'Offline';
-    dot.className    = 'dot error';
+  const appEl = document.getElementById('active-app');
+
+  if (currentDevice === 'roku') {
+    try {
+      const r = await fetch('/api/device-info');
+      if (!r.ok) throw new Error();
+      const doc = xmlParse(await r.text());
+      name.textContent = doc.querySelector('friendly-device-name')?.textContent ?? 'Roku';
+      dot.className    = 'dot online';
+      refreshActiveApp();
+    } catch {
+      name.textContent = 'Offline';
+      dot.className    = 'dot error';
+      appEl.textContent = '';
+    }
+  } else if (currentDevice === 'shield') {
+    name.textContent = 'Shield';
+    dot.className = 'dot online';
+    appEl.textContent = '';
+  } else if (currentDevice === 'pioneer') {
+    name.textContent = 'Pioneer VSX-832';
+    dot.className = 'dot online';
+    appEl.textContent = '';
   }
 }
 
@@ -483,19 +779,19 @@ async function launchApp(id, name) {
   }
 }
 
-// ── Text input ───────────────────────────────────────────────────
-const textInput = document.getElementById('text-input');
-document.getElementById('send-btn').addEventListener('click', sendText);
-document.getElementById('clear-btn').addEventListener('click', () => {
-  textInput.value = '';
-  textInput.focus();
+// ── Roku: Text input ────────────────────────────────────────────
+const rokuTextInput = document.getElementById('roku-text-input');
+document.getElementById('roku-send-btn').addEventListener('click', () => sendRokuText());
+document.getElementById('roku-clear-btn').addEventListener('click', () => {
+  rokuTextInput.value = '';
+  rokuTextInput.focus();
 });
-textInput.addEventListener('keydown', e => {
-  if (e.key === 'Enter') { e.preventDefault(); sendText(); }
+rokuTextInput.addEventListener('keydown', e => {
+  if (e.key === 'Enter') { e.preventDefault(); sendRokuText(); }
 });
 
-async function sendText() {
-  const text = textInput.value;
+async function sendRokuText() {
+  const text = rokuTextInput.value;
   if (!text) return;
   try {
     const r = await fetch('/api/text', {
@@ -503,16 +799,44 @@ async function sendText() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ text })
     });
-    if (r.ok) { textInput.value = ''; showToast('Text sent'); }
+    if (r.ok) { rokuTextInput.value = ''; showToast('Text sent'); }
     else       showToast('Send failed');
   } catch {
     showToast('Server unreachable');
   }
 }
 
-// ── Desktop keyboard shortcuts ───────────────────────────────────
+// ── Shield: Text input ──────────────────────────────────────────
+const shieldTextInput = document.getElementById('shield-text-input');
+document.getElementById('shield-send-btn').addEventListener('click', () => sendShieldText());
+document.getElementById('shield-clear-btn').addEventListener('click', () => {
+  shieldTextInput.value = '';
+  shieldTextInput.focus();
+});
+shieldTextInput.addEventListener('keydown', e => {
+  if (e.key === 'Enter') { e.preventDefault(); sendShieldText(); }
+});
+
+async function sendShieldText() {
+  const text = shieldTextInput.value;
+  if (!text) return;
+  try {
+    const r = await fetch('/api/shield/text', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text })
+    });
+    if (r.ok) { shieldTextInput.value = ''; showToast('Text sent'); }
+    else       showToast('Send failed');
+  } catch {
+    showToast('Server unreachable');
+  }
+}
+
+// ── Desktop keyboard shortcuts (Roku only) ──────────────────────
 document.addEventListener('keydown', e => {
-  if (document.activeElement === textInput) return;
+  if (document.activeElement === rokuTextInput) return;
+  if (currentDevice !== 'roku') return;
   const map = {
     ArrowUp:    'Up',
     ArrowDown:  'Down',
@@ -523,7 +847,7 @@ document.addEventListener('keydown', e => {
     Escape:     'Home',
     ' ':        'Play',
   };
-  if (map[e.key]) { e.preventDefault(); sendKey(map[e.key]); }
+  if (map[e.key]) { e.preventDefault(); sendRokuKey(map[e.key]); }
 });
 
 // ── Helpers ──────────────────────────────────────────────────────
